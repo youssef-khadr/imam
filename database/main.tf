@@ -33,7 +33,16 @@ resource "aws_db_subnet_group" "this" {
        )
      )}"   
 }
- 
+resource "aws_secretsmanager_secret" "postgresSecretPassword" {
+  name        = "imam_postgres_password"
+  description = "IMAM Postgres Password"
+}
+
+resource "aws_secretsmanager_secret_version" "postgresSecretValue" {
+  secret_id     = aws_secretsmanager_secret.postgresSecretPassword.id
+  secret_string = local.master_password
+}
+
 resource "aws_rds_cluster" "this" {
   cluster_identifier                  = var.name
   engine                              = var.engine
@@ -56,6 +65,12 @@ resource "aws_rds_cluster" "this" {
 
   enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
   storage_encrypted = true
+  
+  lifecycle {
+    ignore_changes = [
+      "engine_version"
+    ]
+  }
 }
 
 resource "aws_rds_cluster_instance" "this" {
@@ -80,6 +95,12 @@ resource "aws_rds_cluster_instance" "this" {
          "Name", "DB Cluster Instance"
        )
      )}" 
+  
+  lifecycle {
+    ignore_changes = [
+      "engine_version"
+    ]
+  }     
 }
 
 
@@ -153,30 +174,30 @@ resource "aws_security_group_rule" "cidr_ingress" {
   security_group_id = local.rds_security_group_id
 }
 
-resource "aws_ssm_parameter" "poc_db_username" {
-  name        = "POC_DB_USERNAME"
-  description = "DB Username "
-  type        = "SecureString"
-  value       = "${aws_rds_cluster.this.master_username}"
- # key_id      = var.kms_key_id
-  tags            = "${merge(
-       local.default_tags,
-       map(
-         "Name", "SSM poc_db_username"
-       )
-     )}"  
-}
-
-resource "aws_ssm_parameter" "poc_db_password" {
-  name        = "POC_DB_PASSWORD"
-  description = "DB Password "
-  type        = "SecureString"
-  value       = "${aws_rds_cluster.this.master_password}"
- # key_id      = var.kms_key_id
-  tags            = "${merge(
-       local.default_tags,
-       map(
-         "Name", "SSM poc_db_password"
-       )
-     )}"  
-}
+#resource "aws_ssm_parameter" "poc_db_username" {
+#  name        = "POC_DB_USERNAME"
+#  description = "DB Username "
+#  type        = "SecureString"
+#  value       = "${aws_rds_cluster.this.master_username}"
+# # key_id      = var.kms_key_id
+#  tags            = "${merge(
+#       local.default_tags,
+#       map(
+#         "Name", "SSM poc_db_username"
+#       )
+#     )}"  
+#}
+#
+#resource "aws_ssm_parameter" "poc_db_password" {
+#  name        = "POC_DB_PASSWORD"
+#  description = "DB Password "
+#  type        = "SecureString"
+#  value       = "${aws_rds_cluster.this.master_password}"
+# # key_id      = var.kms_key_id
+#  tags            = "${merge(
+#       local.default_tags,
+#       map(
+#         "Name", "SSM poc_db_password"
+#       )
+#     )}"  
+#}
