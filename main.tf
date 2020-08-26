@@ -37,12 +37,20 @@ module "database" {
   preferred_maintenance_window = "sat:08:00-sat:09:00"
   monitoring_interval = 60
   project  = "IMAM"
+  topic_arn = module.sns.topic_arn
 }
 
 module "backend" {
   source                              = "./backend"
   backend_bucket = "yk-imam-terraform-state-files"
   dynamodb_lock_table_name = "imam-terraform-lock"
+}
+
+module "sns" {
+  source                              = "./sns"
+  sns_subscription_emails= ["youssef.khadr@hotmail.com","youssef.khadr@rackspace.com"]
+  sns_topic_name = "IMAM_RDS_AURORA_DB"
+  sns_topic_display_name=  "Alarm For Imam RDS Aurora DB"
 
 }
 #data "aws_kms_key" "kms_rds_key" {

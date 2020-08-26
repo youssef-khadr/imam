@@ -174,30 +174,74 @@ resource "aws_security_group_rule" "cidr_ingress" {
   security_group_id = local.rds_security_group_id
 }
 
-#resource "aws_ssm_parameter" "poc_db_username" {
-#  name        = "POC_DB_USERNAME"
-#  description = "DB Username "
-#  type        = "SecureString"
-#  value       = "${aws_rds_cluster.this.master_username}"
-# # key_id      = var.kms_key_id
-#  tags            = "${merge(
-#       local.default_tags,
-#       map(
-#         "Name", "SSM poc_db_username"
-#       )
-#     )}"  
-#}
-#
-#resource "aws_ssm_parameter" "poc_db_password" {
-#  name        = "POC_DB_PASSWORD"
-#  description = "DB Password "
-#  type        = "SecureString"
-#  value       = "${aws_rds_cluster.this.master_password}"
-# # key_id      = var.kms_key_id
-#  tags            = "${merge(
-#       local.default_tags,
-#       map(
-#         "Name", "SSM poc_db_password"
-#       )
-#     )}"  
-#}
+resource "aws_cloudwatch_metric_alarm" "HighCPUMetric_Alarm" {
+  count = var.replica_count
+  alarm_name                = "CPU High - ${aws_rds_cluster_instance.this.*.identifier[count.index]}"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = "5"
+  metric_name               = "CPUUtilization"
+  namespace                 = "AWS/RDS"
+  period                    = "60"
+  statistic                 = "Average"
+  threshold                 = "80"
+  alarm_description         = "Average database CPU utilization over last 5 minutes too high"
+  alarm_actions       = [var.topic_arn]
+#  ok_actions          = [var.topic_arn]
+  dimensions = {
+    DBInstanceIdentifier = aws_rds_cluster_instance.this.*.identifier[count.index]
+  } 
+}
+
+resource "aws_cloudwatch_metric_alarm" "MaxHighCPUMetric_Alarm" {
+  count = var.replica_count
+  alarm_name                = "CPU Max High - ${aws_rds_cluster_instance.this.*.identifier[count.index]}"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = "1"
+  metric_name               = "CPUUtilization"
+  namespace                 = "AWS/RDS"
+  period                    = "60"
+  statistic                 = "Average"
+  threshold                 = "98"
+  alarm_description         = "Average database CPU utilization over last minute reach max high"
+  alarm_actions       = [var.topic_arn]
+#  ok_actions          = [var.topic_arn]
+  dimensions = {
+    DBInstanceIdentifier = aws_rds_cluster_instance.this.*.identifier[count.index]
+  } 
+}
+
+resource "aws_cloudwatch_metric_alarm" "MemoryLowMetric_Alarm" {
+  count = var.replica_count
+  alarm_name                = "Memory low - ${aws_rds_cluster_instance.this.*.identifier[count.index]}"
+  comparison_operator       = "LessThanOrEqualToThreshold"
+  evaluation_periods        = "2"
+  metric_name               = "FreeableMemory"
+  namespace                 = "AWS/RDS"
+  period                    = "300"
+  statistic                 = "Average"
+  threshold                 = "${256 * 1024 * 1024}" # 256 Megabyte in Byte
+  alarm_description         = "Average database freeable memory over last 5 minutes too low"
+  alarm_actions       = [var.topic_arn]
+#  ok_actions          = [var.topic_arn]
+  dimensions = {
+    DBInstanceIdentifier = aws_rds_cluster_instance.this.*.identifier[count.index]
+  } 
+}
+
+resource "aws_cloudwatch_metric_alarm" "MemoryVeryLowMetric_Alarm" {
+  count = var.replica_count
+  alarm_name                = "Memory very low  - ${aws_rds_cluster_instance.this.*.identifier[count.index]}"
+  comparison_operator       = "LessThanOrEqualToThreshold"
+  evaluation_periods        = "1"
+  metric_name               = "FreeableMemory"
+  namespace                 = "AWS/RDS"
+  period                    = "60"
+  statistic                 = "Average"
+  threshold                 = "${128 * 1024 * 1024}"  # 128 Megabyte in Byte
+  alarm_description         = "Average database CPU utilization over last minute reach max high"
+  alarm_actions       = [var.topic_arn]
+#  ok_actions          = [var.topic_arn]
+  dimensions = {
+    DBInstanceIdentifier = aws_rds_cluster_instance.this.*.identifier[count.index]
+  } 
+}

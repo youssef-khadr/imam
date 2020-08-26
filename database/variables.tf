@@ -167,5 +167,5 @@ variable "permissions_boundary" {
   type        = string
   default     = null
 }
-
+variable "topic_arn" {}
 variable "project" {}
