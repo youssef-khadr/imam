@@ -40,12 +40,18 @@ module "database" {
   topic_arn = module.sns.topic_arn
 }
 
+## ------------------------------------------------
+## Setup Terraform Backend
+## ------------------------------------------------
 module "backend" {
   source                              = "./backend"
   backend_bucket = "yk-imam-terraform-state-files"
   dynamodb_lock_table_name = "imam-terraform-lock"
 }
 
+## ------------------------------------------------
+## Setup SNS For Database CloudWatch alarms
+## ------------------------------------------------
 module "sns" {
   source                              = "./sns"
   sns_subscription_emails= ["youssef.khadr@hotmail.com","youssef.khadr@rackspace.com"]
@@ -53,6 +59,19 @@ module "sns" {
   sns_topic_display_name=  "Alarm For Imam RDS Aurora DB"
 
 }
+
+## ------------------------------------------------
+## Setup DNS Entries For Database
+## ------------------------------------------------
+module "dns" {
+  source                              = "./dns"
+  hosted_zone_id = "123"
+  dns_writer_record_name = "imamwriter.database.com"
+  database_writer_endpoint = module.database.rds_cluster_endpoint
+  dns_reader_record_name = "imamreader.database.com"
+  database_reader_endpoint = module.database.rds_cluster_reader_endpoint
+}
+
 #data "aws_kms_key" "kms_rds_key" {
 #  key_id = "alias/aws/rds"
 #}

@@ -220,7 +220,7 @@ resource "aws_cloudwatch_metric_alarm" "MemoryLowMetric_Alarm" {
   period                    = "300"
   statistic                 = "Average"
   threshold                 = "${256 * 1024 * 1024}" # 256 Megabyte in Byte
-  alarm_description         = "Average database freeable memory over last 5 minutes too low"
+  alarm_description         = "Average database freeable memory over last 10 minutes too low"
   alarm_actions       = [var.topic_arn]
 #  ok_actions          = [var.topic_arn]
   dimensions = {
@@ -238,7 +238,7 @@ resource "aws_cloudwatch_metric_alarm" "MemoryVeryLowMetric_Alarm" {
   period                    = "60"
   statistic                 = "Average"
   threshold                 = "${128 * 1024 * 1024}"  # 128 Megabyte in Byte
-  alarm_description         = "Average database CPU utilization over last minute reach max high"
+  alarm_description         = "Average database freeable memory over last minute too low"
   alarm_actions       = [var.topic_arn]
 #  ok_actions          = [var.topic_arn]
   dimensions = {
